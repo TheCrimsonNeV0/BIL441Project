@@ -1,4 +1,5 @@
 import chess
+import chess.svg
 import Evaluations
 
 
@@ -54,42 +55,44 @@ def evaluate(board):
 
 
 class ChessAI:
-    def __init__(self, calculation_depth):
+    def __init__(self, playing_for=chess.BLACK, calculation_depth=3):
+        self.playing_for = playing_for
         self.calculation_depth = calculation_depth
         self.board = chess.Board()
         self.turn = chess.WHITE
 
+    def load_board(self, new_board):
+        self.board = new_board
+
+    def print_board(self):
+        print(self.board)
+
+    def make_move(self, move):
+        self.board.push(move)
+
+    def calculate_score(self):
+        return evaluate(self.board)
+
     def calculate_best_move(self):
-        return self.test_minimax(self.board, self.calculation_depth, True)
+        return self.minimax(self.board, self.calculation_depth, True)
 
     def make_best_move(self):
         self.board.push(self.calculate_best_move()[0])
 
-    def maxi(self, position, depth):
-        if depth == 0 or position.is_checkmate():
-            return position, evaluate(position)
-        else:
-            my_max = -float("inf")
-            for move in list(position.legal_moves):
-                score = self.mini(position.copy().push(chess.Move.from_uci(str(move))), depth - 1)
-                if my_max < score:
-                    my_max = score
+    def get_board_svg(self, size=350):
+        return chess.svg.board(self.board,
+                               fill=dict.fromkeys(self.board.attacks(chess.E4), "#cc0000cc"),
+                               squares=chess.SquareSet(chess.BB_DARK_SQUARES & chess.BB_FILE_B),
+                               size=size)
 
-    def mini(self, position, depth):
-        if depth == 0 or position.is_checkmate():
-            return position, evaluate(position)
-        else:
-            my_min = float("inf")
-            for move in list(position.legal_moves):
-                score = self.maxi(position.copy().push(chess.Move.from_uci(str(move))), depth - 1)
-                if score < my_min:
-                    my_min = score
+    def minimax(self, position, depth, alpha=-float("inf"), beta=float("inf"), maximizing=True):
+        score_sign = 1  # White
+        if self.playing_for == chess.BLACK:
+            score_sign = -1  # Black
 
-    def test_minimax(self, position, depth, alpha=-float("inf"), beta=float("inf"), maximizing=True, best_move="h1h3"):
         if depth == 0 or position.is_checkmate():
-            final_move = position.move_stack.pop(self.calculation_depth - 1)
             final_evaluation = evaluate(position)
-            return best_move, final_evaluation
+            return position.move_stack[len(position.move_stack) - self.calculation_depth], score_sign * final_evaluation
         else:
             if maximizing:
                 max_evaluation = -float("inf")
@@ -97,7 +100,7 @@ class ChessAI:
                 for move in list(position.legal_moves):
                     temp_board = position.copy()
                     temp_board.push(chess.Move.from_uci(str(move)))
-                    new_position = self.test_minimax(temp_board, depth - 1, alpha, beta, False, str(move))
+                    new_position = self.minimax(temp_board, depth - 1, alpha, beta, not maximizing)
                     evaluation = new_position[1]
                     if max_evaluation < evaluation:
                         max_evaluation = evaluation
@@ -112,7 +115,7 @@ class ChessAI:
                 for move in list(position.legal_moves):
                     temp_board = position.copy()
                     temp_board.push(chess.Move.from_uci(str(move)))
-                    new_position = self.test_minimax(temp_board, depth - 1, alpha, beta, True)
+                    new_position = self.minimax(temp_board, depth - 1, alpha, beta, not maximizing)
                     evaluation = new_position[1]
                     if evaluation < min_evaluation:
                         min_evaluation = evaluation
@@ -121,72 +124,3 @@ class ChessAI:
                     if beta <= alpha:
                         break
                 return move_to_return, min_evaluation
-
-    def minimax(self, position, alpha, beta, depth, maximizing_for=chess.BLACK):  # is using alpha beta pruning
-        if maximizing_for == chess.BLACK:  # maximize for black, minimize for white
-            if depth == 0 or position.is_checkmate():
-                return evaluate(position), position.move_stack.pop(self.calculation_depth - 1)
-            else:
-                if position.turn == chess.WHITE:
-                    best_move = None
-                    for move in list(position.legal_moves):
-                        temp_position = position.copy()
-                        temp_position.push(chess.Move.from_uci(str(move)))
-                        temp_score, temp_move = self.minimax(temp_position, alpha, beta, depth - 1)
-                        if alpha < temp_score:
-                            alpha = temp_score
-                            best_move = temp_move
-                            if beta <= alpha:
-                                break
-                    return alpha, best_move
-                else:
-                    best_move = None
-                    for move in list(position.legal_moves):
-                        temp_position = position.copy()
-                        temp_position.push(chess.Move.from_uci(str(move)))
-                        temp_score, temp_move = self.minimax(temp_position, alpha, beta, depth - 1)
-                        if temp_score < beta:
-                            beta = temp_score
-                            best_move = temp_move
-                            if beta <= alpha:
-                                break
-                    return beta, best_move
-        else:  # maximize for white, minimize for black
-            if depth == 0 or position.is_checkmate():
-                return evaluate(position), position.move_stack.pop(self.calculation_depth - 1)
-            else:
-                if position.turn == chess.BLACK:
-                    best_move = None
-                    for move in list(position.legal_moves):
-                        temp_position = position.copy()
-                        temp_position.push(chess.Move.from_uci(str(move)))
-                        temp_score, temp_move = self.minimax(temp_position, alpha, beta, depth - 1)
-                        if alpha < temp_score:
-                            alpha = temp_score
-                            best_move = temp_move
-                            if beta <= alpha:
-                                break
-                    return alpha, best_move
-                else:
-                    best_move = None
-                    for move in list(position.legal_moves):
-                        temp_position = position.copy()
-                        temp_position.push(chess.Move.from_uci(str(move)))
-                        temp_score, temp_move = self.minimax(temp_position, alpha, beta, depth - 1)
-                        if temp_score < beta:
-                            beta = temp_score
-                            best_move = temp_move
-                            if beta <= alpha:
-                                break
-                    return beta, best_move
-
-    # Utility functions
-
-    def load_board(self, new_board):
-        self.board = new_board
-
-    def print_board(self):
-        print(self.board)
-
-    def get_evaluation(self):
-        return evaluate(self.board)
