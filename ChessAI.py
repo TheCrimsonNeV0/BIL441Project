@@ -85,11 +85,11 @@ class ChessAI:
                 if score < my_min:
                     my_min = score
 
-    def test_minimax(self, position, depth, alpha=-float("inf"), beta=float("inf"), maximizing=True):
+    def test_minimax(self, position, depth, alpha=-float("inf"), beta=float("inf"), maximizing=True, best_move="h1h3"):
         if depth == 0 or position.is_checkmate():
             final_move = position.move_stack.pop(self.calculation_depth - 1)
             final_evaluation = evaluate(position)
-            return final_move, final_evaluation
+            return best_move, final_evaluation
         else:
             if maximizing:
                 max_evaluation = -float("inf")
@@ -97,7 +97,7 @@ class ChessAI:
                 for move in list(position.legal_moves):
                     temp_board = position.copy()
                     temp_board.push(chess.Move.from_uci(str(move)))
-                    new_position = self.test_minimax(temp_board, depth - 1, alpha, beta, False)
+                    new_position = self.test_minimax(temp_board, depth - 1, alpha, beta, False, str(move))
                     evaluation = new_position[1]
                     if max_evaluation < evaluation:
                         max_evaluation = evaluation
@@ -127,7 +127,6 @@ class ChessAI:
             if depth == 0 or position.is_checkmate():
                 return evaluate(position), position.move_stack.pop(self.calculation_depth - 1)
             else:
-                print(position.turn)
                 if position.turn == chess.WHITE:
                     best_move = None
                     for move in list(position.legal_moves):
