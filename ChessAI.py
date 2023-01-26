@@ -1,6 +1,7 @@
 import chess
 import chess.svg
 import Evaluations
+import Openings
 
 
 def get_square_score(board, position):
@@ -84,6 +85,22 @@ class ChessAI:
                                fill=dict.fromkeys(self.board.attacks(chess.E4), "#cc0000cc"),
                                squares=chess.SquareSet(chess.BB_DARK_SQUARES & chess.BB_FILE_B),
                                size=size)
+
+    def check_openings(self):
+        for opening in Openings.OPENINGS:
+            if len(opening.split(" ")) <= len(self.board.move_stack):
+                continue
+            else:
+                opening_played = True
+                move_index = 0
+                for i in range(len(self.board.move_stack)):
+                    if str(self.board.move_stack[i]) != opening.split(" ")[i]:
+                        opening_played = False
+                        break
+                    move_index += 1
+                if opening_played:
+                    return opening.split(" ")[move_index]
+            return None
 
     def minimax(self, position, depth, alpha=-float("inf"), beta=float("inf"), maximizing=True):
         score_sign = 1  # White
