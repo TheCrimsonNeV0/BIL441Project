@@ -93,14 +93,17 @@ class ChessAI:
             else:
                 opening_played = True
                 move_index = 0
-                for i in range(len(self.board.move_stack)):
-                    if str(self.board.move_stack[i]) != opening.split(" ")[i]:
-                        opening_played = False
-                        break
-                    move_index += 1
+                try:
+                    for i in range(len(self.board.move_stack)):
+                        if str(self.board.move_stack[i]) != opening.split(" ")[i]:
+                            opening_played = False
+                            raise StopIteration
+                        move_index += 1
+                except StopIteration:
+                    pass
                 if opening_played:
                     return opening.split(" ")[move_index]
-            return None
+        return None
 
     def minimax(self, position, depth, alpha=-float("inf"), beta=float("inf"), maximizing=True):
         score_sign = 1  # White
