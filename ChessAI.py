@@ -78,7 +78,11 @@ class ChessAI:
         return self.minimax(self.board, self.calculation_depth, True)
 
     def make_best_move(self):
-        self.board.push(self.calculate_best_move()[0])
+        best_move = self.check_openings()
+        if best_move is None:
+            best_move = self.calculate_best_move()[0]
+        self.board.push(best_move)
+        return best_move
 
     def get_board_svg(self, size=350):
         return chess.svg.board(self.board,
@@ -87,22 +91,26 @@ class ChessAI:
                                size=size)
 
     def check_openings(self):
-        for opening in Openings.OPENINGS:
-            if len(opening.split(" ")) <= len(self.board.move_stack):
+        openings = Openings.FOR_WHITE
+        if self.playing_for == chess.BLACK:
+            openings = Openings.FOR_BLACK
+
+        for opening in openings:
+            if len(opening.opening.split(" ")) <= len(self.board.move_stack):
                 continue
             else:
                 opening_played = True
                 move_index = 0
                 try:
                     for i in range(len(self.board.move_stack)):
-                        if str(self.board.move_stack[i]) != opening.split(" ")[i]:
+                        if str(self.board.move_stack[i]) != opening.opening.split(" ")[i]:
                             opening_played = False
                             raise StopIteration
                         move_index += 1
                 except StopIteration:
                     pass
                 if opening_played:
-                    return opening.split(" ")[move_index]
+                    return chess.Move.from_uci(str(opening.opening.split(" ")[move_index]))
         return None
 
     def minimax(self, position, depth, alpha=-float("inf"), beta=float("inf"), maximizing=True):
