@@ -55,6 +55,30 @@ def evaluate(board):
     return overall_score
 
 
+def sort_moves(position):
+    sorted_moves = []
+    captures = []
+    quiet_moves = []
+    for move in list(position.legal_moves):
+        if position.is_capture(move):  # Capture
+            attacker = position.piece_at(move.from_square).piece_type
+            if position.is_en_passant(move):
+                victim = chess.PAWN
+            else:
+                victim = position.piece_at(move.to_square).piece_type
+            score = Evaluations.MVV_LVA[attacker - 1][victim - 1] + 10000  # For killer moves
+            captures.append([move, score])
+        else:  # Quiet Move
+            quiet_moves.append([move, 0])
+
+    sorted_captures = sorted(captures, key=lambda x: x[1], reverse=True)
+    for i in sorted_captures:
+        sorted_moves.append(i[0])
+    for i in quiet_moves:
+        sorted_moves.append(i[0])
+    return sorted_moves
+
+
 class ChessAI:
     def __init__(self, playing_for=chess.BLACK, calculation_depth=3):
         self.playing_for = playing_for
@@ -125,12 +149,16 @@ class ChessAI:
             if maximizing:
                 max_evaluation = -float("inf")
                 move_to_return = None
-                for move in list(position.legal_moves):
+                for move in sort_moves(position):
                     temp_board = position.copy()
                     temp_board.push(chess.Move.from_uci(str(move)))
                     new_position = self.minimax(temp_board, depth - 1, alpha, beta, not maximizing)
                     evaluation = new_position[1]
-                    if max_evaluation < evaluation:
+
+                    # if beta <= evaluation:
+                    #     pass
+
+                    if max_evaluation < evaluation:  # Fail alpha-beta cutoff
                         max_evaluation = evaluation
                         move_to_return = new_position[0]
                     alpha = max(alpha, evaluation)
@@ -140,12 +168,12 @@ class ChessAI:
             else:
                 min_evaluation = float("inf")
                 move_to_return = None
-                for move in list(position.legal_moves):
+                for move in sort_moves(position):
                     temp_board = position.copy()
                     temp_board.push(chess.Move.from_uci(str(move)))
                     new_position = self.minimax(temp_board, depth - 1, alpha, beta, not maximizing)
                     evaluation = new_position[1]
-                    if evaluation < min_evaluation:
+                    if evaluation < min_evaluation:  # Fail alpha-beta cutoff
                         min_evaluation = evaluation
                         move_to_return = new_position[0]
                     beta = min(beta, evaluation)
