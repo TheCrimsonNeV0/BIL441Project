@@ -68,7 +68,13 @@ def sort_moves(position):
                 victim = position.piece_at(move.to_square).piece_type
             score = Evaluations.MVV_LVA[attacker - 1][victim - 1] + 10000  # For killer moves
             captures.append([move, score])
-        else:  # Quiet Move
+        else:  # Quiet Moves
+            # Rules to rate quiet moves
+            # 1 - Develop minor pieces -> Already in board evaluation
+            # 2 - Connect rooks
+            # 3 - Activate pawns to promote
+            # 4 - Activate pieces
+
             quiet_moves.append([move, 0])
 
     sorted_captures = sorted(captures, key=lambda x: x[1], reverse=True)
@@ -158,11 +164,11 @@ class ChessAI:
                     # if beta <= evaluation:
                     #     pass
 
-                    if max_evaluation < evaluation:  # Fail alpha-beta cutoff
+                    if max_evaluation < evaluation:
                         max_evaluation = evaluation
                         move_to_return = new_position[0]
                     alpha = max(alpha, evaluation)
-                    if beta <= alpha:
+                    if beta < alpha:
                         break
                 return move_to_return, max_evaluation
             else:
@@ -173,10 +179,10 @@ class ChessAI:
                     temp_board.push(chess.Move.from_uci(str(move)))
                     new_position = self.minimax(temp_board, depth - 1, alpha, beta, not maximizing)
                     evaluation = new_position[1]
-                    if evaluation < min_evaluation:  # Fail alpha-beta cutoff
+                    if evaluation < min_evaluation:
                         min_evaluation = evaluation
                         move_to_return = new_position[0]
                     beta = min(beta, evaluation)
-                    if beta <= alpha:
+                    if beta < alpha:
                         break
                 return move_to_return, min_evaluation
