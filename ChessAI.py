@@ -105,7 +105,7 @@ class ChessAI:
         return evaluate(self.board)
 
     def calculate_best_move(self):
-        return self.minimax(self.board, self.calculation_depth, True)
+        return self.minimax(self.board, self.calculation_depth, True)[0]
 
     def make_best_move(self):
         best_move = self.check_openings()
@@ -164,7 +164,7 @@ class ChessAI:
                     if max_evaluation < evaluation:
                         max_evaluation = evaluation
                         move_to_return = new_position[0]
-                    alpha = max(alpha, evaluation)
+                    alpha = max(alpha, max_evaluation)
                     if beta <= alpha:
                         break
                 return move_to_return, max_evaluation
@@ -179,7 +179,7 @@ class ChessAI:
                     if evaluation < min_evaluation:
                         min_evaluation = evaluation
                         move_to_return = new_position[0]
-                    beta = min(beta, evaluation)
+                    beta = min(beta, min_evaluation)
                     if beta <= alpha:
                         break
                 return move_to_return, min_evaluation
