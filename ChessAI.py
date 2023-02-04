@@ -115,10 +115,7 @@ class ChessAI:
         return best_move
 
     def get_board_svg(self, size=350):
-        return chess.svg.board(self.board,
-                               fill=dict.fromkeys(self.board.attacks(chess.E4), "#cc0000cc"),
-                               squares=chess.SquareSet(chess.BB_DARK_SQUARES & chess.BB_FILE_B),
-                               size=size)
+        return chess.svg.board(self.board, size=size)
 
     def check_openings(self):
         openings = Openings.FOR_WHITE
