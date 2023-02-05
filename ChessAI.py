@@ -72,10 +72,13 @@ def sort_moves(position):
             # Rules to rate quiet moves
             # 1 - Develop minor pieces -> Already in board evaluation
             # 2 - Connect rooks
-            # 3 - Activate pawns to promote
+            # 3 - Activate pawns to promote -> Already in board evaluation
             # 4 - Activate pieces
 
-            quiet_moves.append([move, 0])
+            if "=Q" in str(move):  # Queen Promotion
+                quiet_moves.append([move, 9000])
+            else:
+                quiet_moves.append([move, 0])
 
     sorted_captures = sorted(captures, key=lambda x: x[1], reverse=True)
     for i in sorted_captures:

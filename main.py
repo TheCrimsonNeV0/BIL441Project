@@ -13,6 +13,8 @@ if __name__ == '__main__':
         time.sleep(0.1)
         os.startfile('chess.svg')
 
+        print(chess_ai.board.legal_moves)
+
         print("Evaluation: ", chess_ai.calculate_score())
         player_move = input("Input move (in uci format): ")
         chess_ai.make_move(chess.Move.from_uci(player_move))
