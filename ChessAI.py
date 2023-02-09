@@ -72,10 +72,13 @@ def sort_moves(position):
             # Rules to rate quiet moves
             # 1 - Develop minor pieces -> Already in board evaluation
             # 2 - Connect rooks
-            # 3 - Activate pawns to promote
+            # 3 - Activate pawns to promote -> Already in board evaluation
             # 4 - Activate pieces
 
-            quiet_moves.append([move, 0])
+            if "=Q" in str(move):  # Queen Promotion
+                quiet_moves.append([move, 9000])
+            else:
+                quiet_moves.append([move, 0])
 
     sorted_captures = sorted(captures, key=lambda x: x[1], reverse=True)
     for i in sorted_captures:
@@ -108,23 +111,24 @@ class ChessAI:
         return self.minimax(self.board, self.calculation_depth, True)[0]
 
     def make_best_move(self):
-        best_move = self.check_openings()
-        if best_move is None:
-            best_move = self.calculate_best_move()[0]
+        best_move_opening = self.check_openings()
+        if len(best_move_opening) == 0:
+            best_move = self.calculate_best_move()
+        else:
+            if self.playing_for == chess.WHITE:
+                best_move = best_move_opening[0][0]
+            else:
+                best_move = best_move_opening[len(best_move_opening) - 1][0]
+
         self.board.push(best_move)
         return best_move
 
     def get_board_svg(self, size=350):
-        return chess.svg.board(self.board,
-                               fill=dict.fromkeys(self.board.attacks(chess.E4), "#cc0000cc"),
-                               squares=chess.SquareSet(chess.BB_DARK_SQUARES & chess.BB_FILE_B),
-                               size=size)
+        return chess.svg.board(self.board, size=size)
 
     def check_openings(self):
-        openings = Openings.FOR_WHITE
-        if self.playing_for == chess.BLACK:
-            openings = Openings.FOR_BLACK
-
+        openings = Openings.OPENINGS
+        possible_openings = []
         for opening in openings:
             if len(opening.opening.split(" ")) <= len(self.board.move_stack):
                 continue
@@ -140,8 +144,13 @@ class ChessAI:
                 except StopIteration:
                     pass
                 if opening_played:
-                    return chess.Move.from_uci(str(opening.opening.split(" ")[move_index]))
-        return None
+                    temp_move = chess.Move.from_uci(str(opening.opening.split(" ")[move_index]))
+                    if temp_move not in possible_openings:
+                        temp_board = self.board.copy()
+                        temp_board.push(temp_move)
+                        possible_openings.append((temp_move, evaluate(temp_board)))
+        sorted_moves = sorted(possible_openings, key=lambda x: x[1], reverse=True)
+        return sorted_moves
 
     def minimax(self, position, depth, alpha=-float("inf"), beta=float("inf"), maximizing=True):
         score_sign = 1  # White
