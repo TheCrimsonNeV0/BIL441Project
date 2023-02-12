@@ -92,8 +92,13 @@ class ChessAI:
     def __init__(self, playing_for=chess.BLACK, calculation_depth=3):
         self.playing_for = playing_for
         self.calculation_depth = calculation_depth
+
         self.board = chess.Board()
         self.turn = chess.WHITE
+
+        # Other variables
+        self.memo = []
+        self.temp_checked_node_count = 0
 
     def load_board(self, new_board):
         self.board = new_board
@@ -121,6 +126,8 @@ class ChessAI:
                 best_move = best_move_opening[len(best_move_opening) - 1][0]
 
         self.board.push(best_move)
+        print("Checked Node Count:", self.temp_checked_node_count)
+        self.temp_checked_node_count = 0
         return best_move
 
     def get_board_svg(self, size=350):
@@ -153,6 +160,8 @@ class ChessAI:
         return sorted_moves
 
     def minimax(self, position, depth, alpha=-float("inf"), beta=float("inf"), maximizing=True):
+        self.temp_checked_node_count += 1
+
         score_sign = 1  # White
         if self.playing_for == chess.BLACK:
             score_sign = -1  # Black
@@ -175,6 +184,7 @@ class ChessAI:
                         move_to_return = new_position[0]
                     alpha = max(alpha, max_evaluation)
                     if beta <= alpha:
+                        self.temp_checked_node_count -= 1
                         break
                 return move_to_return, max_evaluation
             else:
@@ -190,5 +200,6 @@ class ChessAI:
                         move_to_return = new_position[0]
                     beta = min(beta, min_evaluation)
                     if beta <= alpha:
+                        self.temp_checked_node_count -= 1
                         break
                 return move_to_return, min_evaluation
