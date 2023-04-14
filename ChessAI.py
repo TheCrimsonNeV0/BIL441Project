@@ -71,9 +71,8 @@ def sort_moves(position):
         else:  # Quiet Moves
             # Rules to rate quiet moves
             # 1 - Develop minor pieces -> Already in board evaluation
-            # 2 - Connect rooks
-            # 3 - Activate pawns to promote -> Already in board evaluation
-            # 4 - Activate pieces
+            # 2 - Activate pawns to promote -> Already in board evaluation
+            # 3 - Activate pieces -> Already in board evaluation
 
             if "=Q" in str(move):  # Queen Promotion
                 quiet_moves.append([move, 9000])
@@ -95,6 +94,9 @@ class ChessAI:
         self.board = chess.Board()
         self.turn = chess.WHITE
 
+        self.killer_moves = [[None, None] for _ in range(self.calculation_depth)]  # Memory for future heuristic
+        self.memo = {}  # Memoization for minimax algorithm
+
     def load_board(self, new_board):
         self.board = new_board
 
@@ -108,6 +110,7 @@ class ChessAI:
         return evaluate(self.board)
 
     def calculate_best_move(self):
+        self.memo = {}
         return self.minimax(self.board, self.calculation_depth, True)[0]
 
     def make_best_move(self):
@@ -161,10 +164,25 @@ class ChessAI:
             final_evaluation = evaluate(position)
             return position.move_stack[len(position.move_stack) - self.calculation_depth], score_sign * final_evaluation
         else:
+            result = None
             if maximizing:
                 max_evaluation = -float("inf")
                 move_to_return = None
-                for move in sort_moves(position):
+
+                cache_key = (position.fen(), depth, maximizing, alpha, beta)
+                if cache_key in self.memo:
+                    return self.memo[cache_key]
+
+                killer_move1, killer_move2 = self.killer_moves[depth - 1]  # Killer heuristic
+                moves = sort_moves(position)
+                if killer_move1 is not None and killer_move1 in moves:
+                    moves.remove(killer_move1)
+                    moves.insert(0, killer_move1)
+                if killer_move2 is not None and killer_move2 in moves:
+                    moves.remove(killer_move2)
+                    moves.insert(1, killer_move2)
+
+                for move in moves:
                     temp_board = position.copy()
                     temp_board.push(chess.Move.from_uci(str(move)))
                     new_position = self.minimax(temp_board, depth - 1, alpha, beta, not maximizing)
@@ -175,12 +193,21 @@ class ChessAI:
                         move_to_return = new_position[0]
                     alpha = max(alpha, max_evaluation)
                     if beta <= alpha:
+                        if move_to_return is not None:
+                            self.killer_moves[depth - 1][1] = self.killer_moves[depth - 1][0]
+                            self.killer_moves[depth - 1][0] = move
                         break
-                return move_to_return, max_evaluation
+                result = move_to_return, max_evaluation
             else:
                 min_evaluation = float("inf")
                 move_to_return = None
-                for move in sort_moves(position):
+
+                cache_key = (position.fen(), depth, maximizing, alpha, beta)
+                if cache_key in self.memo:
+                    return self.memo[cache_key]
+
+                moves = sort_moves(position)
+                for move in moves:
                     temp_board = position.copy()
                     temp_board.push(chess.Move.from_uci(str(move)))
                     new_position = self.minimax(temp_board, depth - 1, alpha, beta, not maximizing)
@@ -190,5 +217,10 @@ class ChessAI:
                         move_to_return = new_position[0]
                     beta = min(beta, min_evaluation)
                     if beta <= alpha:
+                        if move_to_return is not None:
+                            self.killer_moves[depth - 1][1] = self.killer_moves[depth - 1][0]
+                            self.killer_moves[depth - 1][0] = move
                         break
-                return move_to_return, min_evaluation
+                result = move_to_return, min_evaluation
+        self.memo[cache_key] = result
+        return result
