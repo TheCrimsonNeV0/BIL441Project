@@ -162,7 +162,7 @@ class ChessAI:
 
         if depth == 0 or position.is_checkmate():
             final_evaluation = evaluate(position)
-            return position.move_stack[len(position.move_stack) - self.calculation_depth], score_sign * final_evaluation
+            return position.move_stack[len(position.move_stack) - self.calculation_depth + depth], score_sign * final_evaluation
         else:
             result = None
             if maximizing:
