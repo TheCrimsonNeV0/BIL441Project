@@ -192,10 +192,10 @@ class ChessAI:
                         max_evaluation = evaluation
                         move_to_return = new_position[0]
                     alpha = max(alpha, max_evaluation)
+                    if move_to_return is not None and beta <= evaluation:
+                        self.killer_moves[depth - 1][1] = self.killer_moves[depth - 1][0]
+                        self.killer_moves[depth - 1][0] = move
                     if beta <= alpha:
-                        if move_to_return is not None:
-                            self.killer_moves[depth - 1][1] = self.killer_moves[depth - 1][0]
-                            self.killer_moves[depth - 1][0] = move
                         break
                 result = move_to_return, max_evaluation
             else:
@@ -216,10 +216,10 @@ class ChessAI:
                         min_evaluation = evaluation
                         move_to_return = new_position[0]
                     beta = min(beta, min_evaluation)
+                    if move_to_return is not None and beta <= evaluation:
+                        self.killer_moves[depth - 1][1] = self.killer_moves[depth - 1][0]
+                        self.killer_moves[depth - 1][0] = move
                     if beta <= alpha:
-                        if move_to_return is not None:
-                            self.killer_moves[depth - 1][1] = self.killer_moves[depth - 1][0]
-                            self.killer_moves[depth - 1][0] = move
                         break
                 result = move_to_return, min_evaluation
         self.memo[cache_key] = result
