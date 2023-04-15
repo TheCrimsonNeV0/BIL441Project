@@ -48,10 +48,15 @@ def get_square_score(board, position):
             return coefficient * (Evaluations.KING + Evaluations.KING_BLACK[x][y])
 
 
-def evaluate(board):
+def evaluate(board, depth=0):
     overall_score = 0
     for i in range(64):
         overall_score += get_square_score(board, i)
+    if board.is_checkmate():
+        if board.turn == chess.WHITE:
+            overall_score -= 10000 * (depth + 1)  # Penalize black for being checkmated
+        else:
+            overall_score += 10000 * (depth + 1)  # Penalize white for being checkmated
     return overall_score
 
 
@@ -161,8 +166,9 @@ class ChessAI:
             score_sign = -1  # Black
 
         if depth == 0 or position.is_checkmate():
-            final_evaluation = evaluate(position)
-            return position.move_stack[len(position.move_stack) - self.calculation_depth + depth], score_sign * final_evaluation
+            final_evaluation = evaluate(position, depth)
+            return position.move_stack[
+                       len(position.move_stack) - self.calculation_depth + depth], score_sign * final_evaluation
         else:
             result = None
             if maximizing:
